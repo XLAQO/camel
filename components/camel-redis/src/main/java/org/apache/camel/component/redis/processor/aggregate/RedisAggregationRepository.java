@@ -56,6 +56,10 @@ public class RedisAggregationRepository extends ServiceSupport
     private RedissonClient redisson;
     @Metadata(description = "URL to remote Redis server", required = true)
     private String endpoint;
+    @Metadata(description = "Username used to authenticate to Redis server")
+    private String username;
+    @Metadata(description = "Password used to authenticate to Redis server")
+    private String password;
     @Metadata(description = "Name of cache to use", required = true)
     private String mapName;
     @Metadata(label = "advanced", description = "Name of cache to use for completed exchanges")
@@ -173,6 +177,22 @@ public class RedisAggregationRepository extends ServiceSupport
     public Exchange recover(CamelContext camelContext, String exchangeId) {
         LOG.trace("Recovering an Exchange with ID {}.", exchangeId);
         return useRecovery ? unmarshallExchange(camelContext, persistedCache.get(exchangeId)) : null;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public boolean isOptimistic() {
@@ -375,7 +395,10 @@ public class RedisAggregationRepository extends ServiceSupport
         }
         if (redisson == null) {
             Config config = new Config();
-            config.useSingleServer().setAddress(String.format("redis://%s", endpoint));
+            config.useSingleServer()
+                    .setAddress(String.format("redis://%s", endpoint))
+                    .setUsername(username)
+                    .setPassword(password);
             redisson = Redisson.create(config);
             shutdownRedisson = true;
         }
